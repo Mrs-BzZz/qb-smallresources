@@ -221,6 +221,7 @@ end)
 
 RegisterNetEvent('consumables:client:Custom', function(itemName)
     QBCore.Functions.TriggerCallback('consumables:itemdata', function(data)
+        if data.prop2 then
         QBCore.Functions.Progressbar('custom_consumable', data.progress.label, data.progress.time, false, true, {
             disableMovement = false,
             disableCarMovement = false,
@@ -235,7 +236,13 @@ RegisterNetEvent('consumables:client:Custom', function(itemName)
             bone = data.prop.bone,
             coords = data.prop.coords,
             rotation = data.prop.rotation
-        }, {}, function() -- Done
+        }, {
+            model = data.prop2.model,
+            bone = data.prop2.bone,
+            coords = data.prop2.coords,
+            rotation = data.prop2.rotation 
+        }, 
+            function() -- Done
             ClearPedTasks(PlayerPedId())
             TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items[itemName], 'remove')
             if data.replenish.type then
@@ -254,6 +261,41 @@ RegisterNetEvent('consumables:client:Custom', function(itemName)
                 TriggerEvent(data.replenish.event)
             end
         end)
+        else
+            QBCore.Functions.Progressbar('custom_consumable', data.progress.label, data.progress.time, false, true, {
+                disableMovement = false,
+                disableCarMovement = false,
+                disableMouse = false,
+                disableCombat = true
+            }, {
+                animDict = data.animation.animDict,
+                anim = data.animation.anim,
+                flags = data.animation.flags
+            }, {
+                model = data.prop.model,
+                bone = data.prop.bone,
+                coords = data.prop.coords,
+                rotation = data.prop.rotation
+            }, {}, function() -- Done
+                ClearPedTasks(PlayerPedId())
+                TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items[itemName], 'remove')
+                if data.replenish.type then
+                    TriggerServerEvent('consumables:server:add' .. data.replenish.type, QBCore.Functions.GetPlayerData().metadata[string.lower(data.replenish.type)] + data.replenish.replenish)
+                end
+                if data.replenish.isAlcohol then
+                    alcoholCount += 1
+                    AlcoholLoop()
+                    if alcoholCount > 1 and alcoholCount < 4 then
+                        TriggerEvent('evidence:client:SetStatus', 'alcohol', 200)
+                    elseif alcoholCount >= 4 then
+                        TriggerEvent('evidence:client:SetStatus', 'heavyalcohol', 200)
+                    end
+                end
+                if data.replenish.event then
+                    TriggerEvent(data.replenish.event)
+                end
+            end)
+        end
     end, itemName)
 end)
 
